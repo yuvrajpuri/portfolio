@@ -1,7 +1,7 @@
 # Habit Tracker CLI
 
 A command-line habit tracker written in Python.
-This project demonstrates building a small persistent CLI tool using `argparse`, JSON storage, and datetime-based streak logic.
+This project demonstrates building a small persistent CLI application using argparse, JSON storage, and datetime-based streak tracking.
 
 ## Concepts Demonstrated
 
@@ -11,6 +11,20 @@ This project demonstrates building a small persistent CLI tool using `argparse`,
 * Streak calculation logic
 * Flexible metadata storage using dictionaries
 * Modular helper functions
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/yuvrajpuri/portfolio.git
+cd portfolio/habit_tracker_cli
+```
+
+Install dependencies:
+```cmd
+pip install -r requirements.txt
+```
 
 ## Running the Program
 
@@ -64,6 +78,20 @@ python tracker.py list reading
 reading
     Streak: 4
     Last logged: 2026-03-15T19:04:20+00:00
+```
+
+## Streak Logic
+
+A streak is counted when consecutive habit updates occur within **24 hours** of each other.
+
+Streaks shorter than **3 entries return 0**, preventing accidental short streaks.
+
+## Running Tests
+
+Run the test suite with:
+
+```cmd
+python -m pytest -v
 ```
 
 ## Data Format
