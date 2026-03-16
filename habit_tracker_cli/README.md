@@ -3,14 +3,30 @@
 A command-line habit tracker written in Python.
 This project demonstrates building a small persistent CLI application using argparse, JSON storage, and datetime-based streak tracking.
 
-## Concepts Demonstrated
+## Features
 
-* Command-line interfaces with `argparse`
-* JSON-based data persistence
-* Datetime parsing and timezone handling
-* Streak calculation logic
-* Flexible metadata storage using dictionaries
-* Modular helper functions
+* Create and track multiple habits
+* Log updates with automatic timestamps
+* Attach flexible metadata to updates
+* Automatic streak calculation (24‑hour window)
+* Optional colored CLI output
+* Rainbow streak indicator for active streaks
+* JSON‑based persistent storage
+* Modular CLI architecture
+
+## Project Architecture
+
+The project is intentionally split into layers to demonstrate clean CLI design.
+
+```
+main.py      → CLI argument parsing
+tracker.py   → business logic and data handling
+display.py   → formatted CLI output
+colors.py    → color helpers and rainbow styling
+```
+
+This structure makes the logic reusable and keeps presentation separate from data operations.
+
 
 ## Installation
 
@@ -26,73 +42,114 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-## Running the Program
+# Usage
 
-From the project directory:
+All commands are run through `main.py`.
 
-```
-python tracker.py create reading
-```
+## Create a Habit
 
-## Example Commands
-
-Create a habit:
-
-```
-python tracker.py create reading
+```bash
+python main.py create reading
 ```
 
-Update a habit:
+---
 
-```
-python tracker.py update reading
-```
+## Update a Habit
 
-Update with metadata:
-
-```
-python tracker.py update reading --meta mood focused
+```bash
+python main.py update reading
 ```
 
-Add multiple metadata entries:
+Each update automatically logs a timestamp.
 
-```
-python tracker.py update reading --meta mood great --meta location library
-```
+---
 
-List habits:
+## Update With Metadata
 
-```
-python tracker.py list
-```
+Metadata can be attached to any update.
 
-View detailed habit information:
-
-```
-python tracker.py list reading
+```bash
+python main.py update reading --meta mood focused
 ```
 
-## Example Output
+Multiple metadata entries can be provided:
+
+```bash
+python main.py update reading --meta mood great --meta location library
+```
+
+---
+
+## List Habits
+
+View a summary of all habits:
+
+```bash
+python main.py list
+```
+
+Example output:
 
 ```
 reading
-    Streak: 4
-    Last logged: 2026-03-15T19:04:20+00:00
+  Streak: 4
+  Last logged: 2026-03-15T19:04:20+00:00
 ```
+
+---
+
+## View Detailed Habit Information
+
+```bash
+python main.py list reading
+```
+
+Example output:
+
+```
+Habit: reading
+🔥 Streak: 4 🔥
+
+Logs: 4
+  2026-03-12T20:00:12+00:00
+  2026-03-13T20:04:55+00:00
+  2026-03-14T20:10:03+00:00
+  2026-03-15T19:04:20+00:00
+
+Metadata:
+  mood: ['focused', 'great']
+```
+
+---
+
+# Color Output
+
+Color output is enabled by default.
+
+Disable it using:
+
+```bash
+python main.py -nc list
+```
+
+or
+
+```bash
+python main.py --no-color list
+```
+
+---
 
 ## Streak Logic
 
-A streak is counted when consecutive habit updates occur within **24 hours** of each other.
+A streak is counted when consecutive updates occur within **24 hours** of each other.
 
-Streaks shorter than **3 entries return 0**, preventing accidental short streaks.
+Rules:
 
-## Running Tests
+* Updates must occur within a 24‑hour window
+* Streaks shorter than **3 entries return 0**
+* Active streaks trigger a **rainbow display** in the CLI
 
-Run the test suite with:
-
-```cmd
-python -m pytest -v
-```
 
 ## Data Format
 
@@ -109,3 +166,21 @@ Habit data is stored locally in `data.json`:
   }
 }
 ```
+
+# Testing
+
+Tests are written using **pytest** and validate:
+
+* habit creation
+* duplicate handling
+* update logging
+* metadata storage
+* streak logic
+
+Run tests with:
+
+```bash
+pytest
+```
+
+---

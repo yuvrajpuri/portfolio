@@ -42,9 +42,9 @@ project-name/
 
 # Projects
 
-| Project           | Version | Last Updated | Description                                                                             | Tech   |
+| Project           | Version | Last Updated | Description                                                                             | Language   |
 | ----------------- | ------- | ------------ | --------------------------------------------------------------------------------------- | ------ |
-| [habit_tracker_cli](habit_tracker_cli/) | v1.0    | 2026-03-15   | Command-line habit tracker with JSON persistence, metadata logging, and streak tracking | Python |
+| [habit_tracker_cli](habit_tracker_cli/) | v1.1    | 2026-03-15   | Modular CLI habit tracker with metadata and streak tracking | Python |
 | Coming soon       | —       | —            | Future project                                                                          | TBD    |
 
 ---

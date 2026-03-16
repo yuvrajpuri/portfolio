@@ -9,7 +9,7 @@ import datetime
 
 DATA_FILE = "data.json"
 
-def create_habit(habit: str):
+def create_habit(habit: str) -> bool:
     # json_string = json.dumps(data)        If we dump a json_string, it adds backslashes to the result
     
     # Step 1: check for already existing habits
@@ -17,11 +17,9 @@ def create_habit(habit: str):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as file:
                 current_data = json.load(file)      # Get already existing data
-                print(f"Prior data found: {current_data}")
                 if not isinstance(current_data, dict):
                     raise ValueError("JSON root must be a dictionary.")
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"Error reading JSON: {e}. Starting with empty dictionary")
             current_data = {}       # Make empty dict to start
 
         # Step 2: Make new habit
@@ -29,8 +27,7 @@ def create_habit(habit: str):
             current_data["habit"] = {}      # Turn it to dict
 
         if habit in current_data["habit"]:
-            print(f"Habit '{habit}' already exists.")
-            return
+            return False        # False means its a duplicate
 
         current_data["habit"][habit] = {}     # Make new habit dict
         current_data["habit"][habit].update(
@@ -43,16 +40,13 @@ def create_habit(habit: str):
 
 
         # Step 3: write it back to the file - we essentially overwrite it
-        try:
-            save_tracker(current_data)
-            
-            print("data.json updated successfully.")
-        except OSError as e:
-            print(f"Error writing to file: {e}")
+        save_tracker(current_data)
+
+        return True     # Habit created
 
     # Step 1b: if it doesn't exist, make a brand new one with your brand new habit.
     else:
-        print("data.json doesn't exist - making something new instead.")
+
         data = {
             "habit": {
                 habit: {
@@ -63,6 +57,7 @@ def create_habit(habit: str):
             }
         }
         save_tracker(data)
+        return True     # Habit created
 
 def get_habits() -> dict:
     if os.path.exists(DATA_FILE):
@@ -70,10 +65,9 @@ def get_habits() -> dict:
             with open(DATA_FILE, "r") as file:
                 return json.load(file)
         except Exception as e:
-            print(f"Error in reading file: {e}")
-            return
+            return {"habit": {}}
     else:
-        raise OSError("data.json not found")
+        return {"habit": {}}        # Can't return none, return a dict.
 
 
 def update_habit_date(habit: str, tracker: dict) -> None:
@@ -111,7 +105,7 @@ def save_tracker(tracker: dict) -> None:
     with open(DATA_FILE, "w",encoding="utf-8") as file:
         json.dump(tracker, file, indent=4, ensure_ascii=False)
 
-def update_tracker(habit: str, **kwargs) -> None:
+def update_tracker(habit: str, **kwargs) -> bool:
     """
     Update the habit tracker for a specific habit. 
     You can add keyword arguments to this, but every update's datetime is logged no matter what.
@@ -120,8 +114,7 @@ def update_tracker(habit: str, **kwargs) -> None:
     tracker = get_habits()      # Already does the check for if the path exists
 
     if habit not in tracker["habit"]:       # Check if your habit exists
-        print("Habit not found.")
-        return
+        return False        # Update did not occur
 
     # Always update the date log - means an update occurred even if you don't have anything to report
     update_habit_date(habit, tracker)
@@ -129,6 +122,7 @@ def update_tracker(habit: str, **kwargs) -> None:
     if kwargs:
         update_habit_metadata(habit, tracker, **kwargs)
     save_tracker(tracker)
+    return True         # Update saved
 
 def return_streak(habit: str, tracker: dict) -> int:
     """
@@ -137,6 +131,8 @@ def return_streak(habit: str, tracker: dict) -> int:
     """
 
     # check if the logs exist first
+    if habit not in tracker["habit"]:
+        return 0
     logs = tracker["habit"][habit].get("logs", [])
     if not logs:
         return 0
@@ -175,92 +171,90 @@ def parse_value(value: str):
     # Otherwise leave as string
     return value
 
-def list_habits(habit: str | None = None) -> None:
+def list_habits(habit: str | None = None):
     tracker = get_habits()
 
     if not tracker or "habit" not in tracker:
-        print("No habits found.")
-        return
+        return None
     
     if habit:
         if habit not in tracker["habit"]:
-            print("Habit not found.")
-            return
+            return None
 
-        streak = return_streak(habit, tracker)
-        logs = tracker["habit"][habit].get("logs", [])
-        metadata = tracker["habit"][habit].get("metadata", {})
+        data = tracker["habit"][habit]
 
-        # All the data about a given habit
-        print(f"Habit : {habit}")
-        print(f"Streak: {streak}")
-        print(f"Logs: {len(logs)}")
-        for log in logs:
-            print(f"\t{log}")
-        print("\nMetadata:")
-        for key, values in metadata.items():
-            print(f"\t{key}: {values}")
-        
-        return
-
+        # if a habit is selected as an argument, make sure to give that habits data
+        return {
+            "habit": habit,
+            "streak": return_streak(habit, tracker),
+            "logs": data.get("logs", []),
+            "metadata": data.get("metadata", {})
+        }
+    
+    # Something to contain the results for each habit
+    results = []
 
     # If habit is not specified
     for habit_name in sorted(tracker["habit"]):
+        
         streak = return_streak(habit_name, tracker)
 
         logs = tracker["habit"][habit_name].get("logs", [])
         last_log = logs[-1] if logs else "Never"
 
-        print(f"{habit_name}")
-        print(f"\tStreak: {streak}")
-        print(f"\tLast logged: {last_log}")
-        print()
+        results.append({
+            "habit": habit_name,
+            "streak": return_streak(habit_name, tracker),
+            "last_log": last_log,
+        })
+
+    return results
         
 
-def main():
-        # Argument parsers
-    parser = argparse.ArgumentParser(description="Habit Tracker CLI")
+""" def main():
+    # Argument parsers
+parser = argparse.ArgumentParser(description="Habit Tracker CLI")
 
-    subparsers = parser.add_subparsers(dest="command")
+subparsers = parser.add_subparsers(dest="command")
 
-    # create command
-    create_parser = subparsers.add_parser("create", help="Create a new habit")
-    create_parser.add_argument("habit")
+# create command
+create_parser = subparsers.add_parser("create", help="Create a new habit")
+create_parser.add_argument("habit")
 
-    # update command
-    update_parser = subparsers.add_parser("update", help="Update a habit")
-    update_parser.add_argument("habit")
-    update_parser.add_argument(
-        "--meta",
-        nargs=2,
-        action="append",
-        metavar=("KEY", "VALUE"),
-        help="Add metadata entries"
-    )
+# update command
+update_parser = subparsers.add_parser("update", help="Update a habit")
+update_parser.add_argument("habit")
+update_parser.add_argument(
+    "--meta",
+    nargs=2,
+    action="append",
+    metavar=("KEY", "VALUE"),
+    help="Add metadata entries"
+)
 
-    # list command
-    list_parser = subparsers.add_parser("list", help="List habits")
-    list_parser.add_argument("habit", nargs="?", default=None)
-    args = parser.parse_args()
+# list command
+list_parser = subparsers.add_parser("list", help="List habits")
+list_parser.add_argument("habit", nargs="?", default=None)
+args = parser.parse_args()
 
-    if args.command == "create":
-        create_habit(args.habit)
+if args.command == "create":
+    create_habit(args.habit)
 
-    elif args.command == "update":
-        kwargs = {}
+elif args.command == "update":
+    kwargs = {}
 
-        if args.meta:
-            for key, value in args.meta:
-                kwargs[key] = parse_value(value)
+    if args.meta:
+        for key, value in args.meta:
+            kwargs[key] = parse_value(value)
 
-        update_tracker(args.habit, **kwargs)
+    update_tracker(args.habit, **kwargs)
 
-    elif args.command == "list":
-        list_habits(args.habit)
+elif args.command == "list":
+    list_habits(args.habit)
 
-    else:
-        parser.print_help()
+else:
+    parser.print_help()
+ """
 
-
-if __name__ == "__main__":
-    main()
+""" if __name__ == "__main__":
+    main() """
